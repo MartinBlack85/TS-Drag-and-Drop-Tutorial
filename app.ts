@@ -1,6 +1,41 @@
 
+// Create a validation function
+// using an interface to define an object structure for validation
+interface IValidatable {
+
+    // supported properties, by using the ? the values are optionial (undefined)
+    value: string | number;
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+
+}
+
+// Creating a function for validation: it gets a validatable object
+function validate(validatableInput: IValidatable) {
+    let isValid = true;     // it will turn false if one of the property checks fail
+    if(validatableInput.required) {
+        isValid = isValid && validatableInput.value.toString().trim().length !== 0;
+    }
+    if(validatableInput.minLength != null && typeof validatableInput.value === 'string') {
+        isValid = isValid && validatableInput.value.length >= validatableInput.minLength;
+    }
+    if(validatableInput.maxLength != null && typeof validatableInput.value === 'string') {
+        isValid = isValid && validatableInput.value.length <= validatableInput.maxLength;
+    }
+    if(validatableInput.min != null && typeof validatableInput.value === 'number') {
+        isValid = isValid && validatableInput.value >= validatableInput.min;
+    }
+    if(validatableInput.max != null && typeof validatableInput.value === 'number') {
+        isValid = isValid && validatableInput.value <= validatableInput.max;
+    }
+    return isValid;
+}
+
 // Creating autobind decorator:
-// as for the descriptor: give access to the original function: functions are properties with working logic
+// as for the descriptor: give access to the original method: methods are properties that hold functions
 function AutoBind(target: any, methodName: string, descriptor: PropertyDescriptor) {
 
     //getting access to the original method:
@@ -51,6 +86,48 @@ class ProjectInput {
         this.attach();
     }
 
+    // to gather and validate all the input data:
+    // this function returnes a union type consist of a tuple and a void return type (nit always return a value)
+    private gatherUserInput(): [string, string, number] | void {
+        const enteredTitle = this.titleInputElement.value;
+        const enteredDescription = this.descriptionInputElement.value;
+        const enteredPeople = this.peopleInputElement.value;
+
+
+        // implementing the interface for validation:
+        const titleValidatable: IValidatable = {
+            value: enteredTitle,
+            required: true
+        };
+
+        const descriptionValidatable: IValidatable = {
+            value: enteredDescription,
+            required: true,
+            minLength: 5
+        };
+
+        const peopleValidatable: IValidatable = {
+            value: +enteredPeople,
+            required: true,
+            min: 1,
+            max:5
+        };
+
+        // using a configuration object for validation
+        if(!validate(titleValidatable) || !validate(descriptionValidatable) || !validate(peopleValidatable)) {
+            alert('Invalid input, please try again');
+            return;
+        } else {
+            return [enteredTitle, enteredDescription, +enteredPeople];          // the + converts the enteredPeople string input into a number
+        }
+    }
+
+    // function to clear the input:
+    private clearInputValues() {
+        this.titleInputElement.value = '';
+        this.descriptionInputElement.value = '';
+        this.peopleInputElement.value = '';
+    }
 
     // binding method: will bind to the eventlistener
     @AutoBind
@@ -60,6 +137,14 @@ class ProjectInput {
         // first need to prevent default form submission (that would trigger an http request)
         event.preventDefault();
         console.log(this.titleInputElement.value);
+        const userInput = this.gatherUserInput();
+        // using a runtime check to check the tuple if it's an array (using an Array object and the isArray method)
+        if(Array.isArray(userInput)) {
+            // destructuring
+            const [title, description, people] = userInput;
+            console.log(title, description, people);
+            this.clearInputValues();
+        }
     }
 
 
