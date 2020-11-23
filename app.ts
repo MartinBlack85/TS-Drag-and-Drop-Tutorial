@@ -1,4 +1,24 @@
 
+// Project State Management Class
+class projectState {
+
+    private projects: any[] = [];
+
+
+    addProject(title: string, description: string, numberOfPeople: number) {
+        const newProject = {
+            id: Math.random().toString(),
+            title: title,
+            description: description,
+            poeple: numberOfPeople
+        };
+        this.projects.push(newProject);
+    }
+}
+
+
+
+
 // Create a validation function
 // using an interface to define an object structure for validation
 interface IValidatable {
@@ -51,7 +71,52 @@ function AutoBind(target: any, methodName: string, descriptor: PropertyDescripto
 }
 
 
-// class to work with inputs
+// ProjectList Class
+class ProjectList {
+
+    templateElement: HTMLTemplateElement;
+    hostElement: HTMLDivElement;
+    element: HTMLElement;
+
+
+    // adding a new property with accessor in the constructor parameter
+    constructor(private type: 'active' | 'finished') {
+        // gives access to the element that holds the content to render
+        this.templateElement = document.getElementById('project-list')! as HTMLTemplateElement;
+
+        // holds a reference to the element where it will be rendered
+        this.hostElement = document.getElementById('app')! as HTMLDivElement;
+
+        // when instantiate this class, it will render a form: 
+        // need to pass a pointer to the importNode function:
+        const importedNode = document.importNode(this.templateElement.content, true);
+        this.element = importedNode.firstElementChild as HTMLElement;
+
+        // assign a css id and render it
+        this.element.id = `${this.type}-projects`;
+
+        // calling the attach function to get the host element into the DOM
+        this.attach();
+        this.renderContent();
+    }
+
+    private renderContent() {
+        const listId = `${this.type}-projects-lists`;
+        this.element.querySelector('ul')!.id = listId;
+        // this will create the headings for that section
+        this.element.querySelector('h2')!.textContent = this.type.toUpperCase() + ' PROJECTS'
+
+    }
+
+    private attach() {
+        this.hostElement.insertAdjacentElement('beforeend', this.element);
+    }
+
+}
+
+
+
+// Inputs Calss
 class ProjectInput {
 
     templateElement: HTMLTemplateElement;
@@ -168,3 +233,5 @@ class ProjectInput {
 
 
 const projectInput = new ProjectInput();
+const activeProjectList = new ProjectList('active');
+const finishedProjectList = new ProjectList('finished');
